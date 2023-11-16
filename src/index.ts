@@ -1,8 +1,15 @@
-const app = async () => {
-    console.log('Hello world!')
-}
+import express from "express"
+import dotenv from 'dotenv'
 
-app()
-    .catch(e => console.error(e))
-    .then( () => console.log('Shutting down...'))
-    .then( () => process.exit())
+dotenv.config()
+
+const app = express()
+const port = process.env.PORT || 4002
+
+app.get('/api/health-check', (_,res) => {
+    res.send('OK')
+})
+
+app.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`)
+})
