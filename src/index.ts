@@ -1,15 +1,15 @@
 import express from "express"
 import dotenv from 'dotenv'
+import server from './server'
 
 dotenv.config()
 
-const app = express()
-const port = process.env.PORT || 4002
+const startServer = async () => {
+    const port = Number(process.env.PORT) || 4002
+    await server.start( Number(port))
+    server.instance().get('/api/health-check', (_,res) => {
+        res.sendStatus(200)
+    })
+}
 
-app.get('/api/health-check', (_,res) => {
-    res.send('OK')
-})
-
-app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`)
-})
+startServer()
