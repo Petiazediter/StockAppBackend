@@ -7,7 +7,7 @@ import server from "../server";
 const getStockBySymbol = async ( req: express.Request, res: express.Response ) => {
     const symbol = req.params.symbol;
 
-    const stock = server.dbInstance.stock.findUnique({
+    const stock = await server.dbInstance.stock.findUnique({
         where: {
             symbol
         }
