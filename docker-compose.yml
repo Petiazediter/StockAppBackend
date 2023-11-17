@@ -1,0 +1,35 @@
+version: '1.0'
+
+services:
+  database: 
+    container_name: 'stock-db'
+    image: postgres
+    restart: always
+    volumes:
+      - stock_db:/var/lib/postgresql/data
+    ports:
+      - 5438:5432
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-stock}
+  webapi:
+    container_name: 'stock-api'
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    command: bash -c 'npm run dev'
+    volumes:
+      - .:/opt/app:delegated
+      - node_modules:/opt/app/node_modules
+    ports:
+      - ${PORT:-4001}:${PORT:-4001}
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgres://user:password@database:5432/stock?connect_timeout=3000&schema=public}
+      - PORT=${PORT:-4001}
+    depends_on:
+      - database
+volumes:
+  node_modules:
+  stock_db:
+    driver: local
