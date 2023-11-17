@@ -16,7 +16,7 @@ const run = async () => {
                 const { c } = data
                 await stockService.recordPrice(symbol, c)
                 console.log(`Successfully recorded price for ${symbol}.`)
-                stockService.deleteOldRecordedPrices(symbol)
+                await stockService.deleteOldRecordedPrices(symbol)
             }
         } catch (e) {
             console.error(`Error occurred while fetching stock price for ${symbol}.`)

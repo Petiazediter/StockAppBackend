@@ -10,7 +10,8 @@ const getStockBySymbol = async ( req: express.Request, res: express.Response ) =
     } catch (e) {
         return res.status(404)
             .json({
-                error: 'Symbol not found.'
+                error: 'Stock not found by this symbol.',
+                detailedError: e
             })
     }
     
@@ -45,6 +46,16 @@ const getStockBySymbol = async ( req: express.Request, res: express.Response ) =
 const recordStockPrice = async ( req: express.Request, res: express.Response ) => {
     const symbol = req.params.symbol;
 
+    try {
+        await ensureValidSymbol(symbol)
+    } catch (e) {
+        return res.status(404)
+            .json({
+                error: 'Stock not found by this symbol.',
+                detailedError: e
+            })
+    }
+
     const [_api, stock] = await stockService.getStockBySymbol(symbol)
     const alreadyExists = stock !== null
 
@@ -52,15 +63,6 @@ const recordStockPrice = async ( req: express.Request, res: express.Response ) =
         return res.status(400)
             .json({
                 error: 'Stock already recording daily. Please use GET /stock/:symbol to access the recorded data.'
-            })
-    }
-
-    try {
-        await ensureValidSymbol(symbol)
-    } catch (e) {
-        return res.status(404)
-            .json({
-                error: 'Symbol not found.'
             })
     }
 

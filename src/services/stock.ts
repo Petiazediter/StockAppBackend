@@ -4,6 +4,7 @@ import server from "../server"
 interface SearchResults {
     count: number
     result: Record<string, any>[]
+    error?: string
 }
 
 const headers = {
@@ -23,7 +24,7 @@ const getStockBySymbol = async (symbol: string) => {
             where: {
                 symbol
             }
-        })
+        }) 
     ])
 }
 
@@ -108,31 +109,36 @@ const fetchRecordedPricesCount = async (symbol: string) => {
     })
 }
 
-const deleteOldRecordedPrices = async (symbol: string) => {
-    fetchRecordedPricesCount(symbol).then((recordedStockPrice) => {
-        const count = recordedStockPrice?._count.recordedPrices
-        if ( count && count > 10 ) {
-            server.dbInstance.recordedStockPrice.findMany({
-                    where: {
-                        stock: {
-                            symbol
-                        }
-                    },
-                    orderBy: {
-                        recordedAt: 'asc'
-                    },
-                    take: count - 10,
-                    select: {
-                        id: true
-                    }
-                }).then(idsToDelete => {
-                    idsToDelete.forEach( ({id}) => server.dbInstance.recordedStockPrice.delete({
+const deleteOldRecordedPrices = async (symbol: string): Promise<void> => {
+    return new Promise( resolve => {
+        fetchRecordedPricesCount(symbol).then((recordedStockPrice) => {
+            const count = recordedStockPrice?._count.recordedPrices
+            if ( count && count > 10 ) {
+                console.log('Recorded count: ', count)
+                server.dbInstance.recordedStockPrice.findMany({
                         where: {
-                            id
+                            stock: {
+                                symbol
+                            }
+                        },
+                        orderBy: {
+                            recordedAt: 'asc'
+                        },
+                        take: count - 10,
+                        select: {
+                            id: true
                         }
-                }))
-            })
-        }
+                    }).then(idsToDelete => {
+                        console.log(`Deleting ${idsToDelete.length} old recorded prices for ${symbol}.`)
+                        Promise.all(idsToDelete.map( ({id}) => server.dbInstance.recordedStockPrice.delete({
+                            where: {
+                                id
+                            }
+                        }).then( () => resolve())
+                    ))
+                })
+            }
+        })
     })
 }
 
