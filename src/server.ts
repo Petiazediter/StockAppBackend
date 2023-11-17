@@ -1,5 +1,7 @@
+import { PrismaClient } from "@prisma/client"
 import express from "express"
 
+const db = new PrismaClient()
 const app = express()
 
 const get = () => app
@@ -15,5 +17,6 @@ const start = (port: number): Promise<void> => {
 
 export default {
     instance: get,
-    start
+    start,
+    dbInstance: db
 }
