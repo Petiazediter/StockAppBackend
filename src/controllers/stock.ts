@@ -35,13 +35,45 @@ const getStockBySymbol = async ( req: express.Request, res: express.Response ) =
         }
     })
 
-    console.log(JSON.stringify(data))
-
     if ( status === 200 ) {
-        return res.status(200)
-            .json({
-                currentPrice: data.c,
-            })
+        const [stockPrices, lastRecorded] = await Promise.all([
+        server.dbInstance.recordedStockPrice.aggregate({
+            where: {
+                stock: {
+                    symbol
+                }
+            },
+            _avg: {
+                price: true
+            },
+            orderBy: {
+                price: 'desc'
+            },
+            take: 10,
+            _count: true
+        }),
+        server.dbInstance.recordedStockPrice.findFirst({
+            where: {
+                stock: {
+                    symbol
+                }
+            },
+            orderBy: {
+                recordedAt: 'desc'
+            },
+            select: {
+                recordedAt: true
+            }
+        }),
+    ])
+
+    return res.status(200)
+        .json({
+            currentPrice: data.c,
+            movingAvg: stockPrices._avg.price,
+            lastRecordedAt: lastRecorded?.recordedAt,
+            warningMsg: stockPrices._count < 10 && 'There is no 10 recorded prices yet. Please wait for a while.'
+        })
     } else {
         res.status(status)
             .json({
